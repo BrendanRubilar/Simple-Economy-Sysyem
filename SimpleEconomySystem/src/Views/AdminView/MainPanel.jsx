@@ -1,35 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import Database from 'better-sqlite3';
+import './MainPanel.css'; // Importamos el nuevo archivo CSS
 
 const MainPanel = () => {
     const [classes, setClasses] = useState([]); // Clases y estudiantes
     const [selectedClass, setSelectedClass] = useState(null); // Clase seleccionada
 
-    // Cargar datos desde SQLite
-    useEffect(() => {
-        const loadClassesFromDatabase = () => {
-            // Conectar a la base de datos
-            const db = new Database('c:/Users/brend/Desktop/Simple-Economy-Sysyem/SimpleEconomySystem/Database/database.db', { verbose: console.log });
+    // Cargar datos desde SQLite a través de IPC
+    const loadData = async () => {
+        try {
+            const classesResult = await window.electronAPI.dbQuery('SELECT id, name FROM classes');
+            const studentsResult = await window.electronAPI.dbQuery('SELECT id, name, grade AS course, coins, class_id FROM students');
 
-            // Consultar las clases
-            const sqlClasses = `SELECT id, name AS className FROM classes`;
-            const sqlStudents = `SELECT id, name, grade AS course, coins, class_id FROM students`;
-
-            const classes = db.prepare(sqlClasses).all();
-            const students = db.prepare(sqlStudents).all();
-
-            // Asociar estudiantes con sus clases
-            const data = classes.map((cls) => ({
-                id: cls.id,
-                name: cls.className,
-                students: students.filter((student) => student.class_id === cls.id),
+            // Combina los estudiantes en sus respectivas clases
+            const classesWithStudents = classesResult.map((cls) => ({
+                ...cls,
+                students: studentsResult.filter((student) => student.class_id === cls.id),
             }));
 
-            setClasses(data);
-            db.close(); // Cerrar la conexión a la base de datos
-        };
+            setClasses(classesWithStudents);
+        } catch (error) {
+            console.error('Error al cargar datos desde la base de datos:', error);
+        }
+    };
 
-        loadClassesFromDatabase();
+    useEffect(() => {
+        loadData();
     }, []);
 
     // Función para seleccionar una clase
@@ -44,81 +39,66 @@ const MainPanel = () => {
     };
 
     // Función para sumar monedas a un estudiante
-    const addCoin = (studentId) => {
-        setClasses((prevClasses) =>
-            prevClasses.map((cls) =>
-                cls.id === selectedClass.id
-                    ? {
-                          ...cls,
-                          students: cls.students.map((student) =>
-                              student.id === studentId
-                                  ? { ...student, coins: student.coins + 1 }
-                                  : student
-                          ),
-                      }
-                    : cls
-            )
-        );
+    const addCoin = async (studentId) => {
+        try {
+            // 1. Actualizar la base de datos
+            await window.electronAPI.dbQuery('UPDATE students SET coins = coins + 1 WHERE id = ?', [studentId]);
+
+            // 2. Crear el nuevo estado actualizado
+            const newClasses = classes.map((cls) => {
+                if (cls.id !== selectedClass.id) return cls;
+                const newStudents = cls.students.map((student) => 
+                    student.id === studentId ? { ...student, coins: student.coins + 1 } : student
+                );
+                return { ...cls, students: newStudents };
+            });
+
+            // 3. Actualizar ambos estados para forzar el re-render
+            setClasses(newClasses);
+            setSelectedClass(newClasses.find(cls => cls.id === selectedClass.id));
+
+        } catch (error) {
+            console.error('Error al sumar moneda:', error);
+        }
     };
 
     // Función para restar monedas a un estudiante
-    const subtractCoin = (studentId) => {
-        setClasses((prevClasses) =>
-            prevClasses.map((cls) =>
-                cls.id === selectedClass.id
-                    ? {
-                          ...cls,
-                          students: cls.students.map((student) =>
-                              student.id === studentId && student.coins > 0
-                                  ? { ...student, coins: student.coins - 1 }
-                                  : student
-                          ),
-                      }
-                    : cls
-            )
-        );
+    const subtractCoin = async (studentId) => {
+        try {
+            // 1. Actualizar la base de datos
+            await window.electronAPI.dbQuery('UPDATE students SET coins = MAX(0, coins - 1) WHERE id = ?', [studentId]);
+
+            // 2. Crear el nuevo estado actualizado
+            const newClasses = classes.map((cls) => {
+                if (cls.id !== selectedClass.id) return cls;
+                const newStudents = cls.students.map((student) =>
+                    student.id === studentId ? { ...student, coins: Math.max(0, student.coins - 1) } : student
+                );
+                return { ...cls, students: newStudents };
+            });
+
+            // 3. Actualizar ambos estados
+            setClasses(newClasses);
+            setSelectedClass(newClasses.find(cls => cls.id === selectedClass.id));
+
+        } catch (error) {
+            console.error('Error al restar moneda:', error);
+        }
     };
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h1 style={{ textAlign: 'center' }}>Panel de Administración</h1>
+        <div className="main-panel-container">
+            <h1 className="main-panel-header">Panel de Administración</h1>
             {selectedClass ? (
                 // Vista de estudiantes dentro de una clase
                 <div>
-                    <button
-                        onClick={goBack}
-                        style={{
-                            marginBottom: '20px',
-                            padding: '10px 15px',
-                            backgroundColor: '#007BFF',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                        }}
-                    >
+                    <button onClick={goBack} className="btn btn-back">
                         Volver a las clases
                     </button>
-                    <h2 style={{ textAlign: 'center' }}>{selectedClass.name}</h2>
-                    <div
-                        style={{
-                            display: 'flex',
-                            gap: '20px',
-                            flexWrap: 'wrap',
-                            justifyContent: 'center',
-                        }}
-                    >
+                    <h2 className="students-view-header">{selectedClass.name}</h2>
+                    <div className="cards-container">
                         {selectedClass.students.map((student) => (
-                            <div
-                                key={student.id}
-                                style={{
-                                    border: '1px solid #ccc',
-                                    borderRadius: '8px',
-                                    padding: '15px',
-                                    width: '250px',
-                                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                                }}
-                            >
+                            <div key={student.id} className="card student-card">
                                 <h3>{student.name}</h3>
                                 <p>
                                     <strong>Curso:</strong> {student.course}
@@ -126,37 +106,11 @@ const MainPanel = () => {
                                 <p>
                                     <strong>Monedas:</strong> {student.coins}
                                 </p>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        marginTop: '10px',
-                                    }}
-                                >
-                                    <button
-                                        onClick={() => addCoin(student.id)}
-                                        style={{
-                                            backgroundColor: '#4CAF50',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '8px 12px',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
+                                <div className="coin-controls">
+                                    <button onClick={() => addCoin(student.id)} className="btn btn-add">
                                         +1 Moneda
                                     </button>
-                                    <button
-                                        onClick={() => subtractCoin(student.id)}
-                                        style={{
-                                            backgroundColor: '#f44336',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '8px 12px',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
+                                    <button onClick={() => subtractCoin(student.id)} className="btn btn-subtract">
                                         -1 Moneda
                                     </button>
                                 </div>
@@ -166,27 +120,12 @@ const MainPanel = () => {
                 </div>
             ) : (
                 // Vista de clases
-                <div
-                    style={{
-                        display: 'flex',
-                        gap: '20px',
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                    }}
-                >
+                <div className="cards-container">
                     {classes.map((cls) => (
                         <div
                             key={cls.id}
                             onClick={() => selectClass(cls.id)}
-                            style={{
-                                border: '1px solid #ccc',
-                                borderRadius: '8px',
-                                padding: '15px',
-                                width: '250px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                            }}
+                            className="card class-card"
                         >
                             <h3>{cls.name}</h3>
                             <p>

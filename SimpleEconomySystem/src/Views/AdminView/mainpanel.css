@@ -1,0 +1,118 @@
+/* Importamos una fuente más moderna */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+/* Contenedor principal con fondo temático */
+.main-panel-container {
+    font-family: 'Montserrat', sans-serif;
+    padding: 20px;
+    background-color: #f4f7f6; /* Un gris muy claro */
+    /* Para un fondo con imagen, descomenta la siguiente línea: */
+    /* background-image: url('/path/to/your/vector-background.svg'); */
+    min-height: 100vh;
+}
+
+.main-panel-header {
+    text-align: center;
+    color: #333;
+    margin-bottom: 40px;
+}
+
+/* Contenedor para las tarjetas (de clases o estudiantes) */
+.cards-container {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Estilo base para las tarjetas */
+.card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    width: 280px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Tarjeta de Clase */
+.class-card {
+    text-align: center;
+    cursor: pointer;
+    border-top: 5px solid #0033A0; /* Azul de la bandera de Chile */
+}
+
+.class-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+.class-card h3 {
+    margin-top: 0;
+    color: #0033A0;
+}
+
+/* Vista de Estudiantes */
+.students-view-header {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Tarjeta de Estudiante */
+.student-card {
+    border-left: 5px solid #D52B1E; /* Rojo de la bandera de Chile */
+}
+
+.student-card h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.student-card p {
+    margin: 8px 0;
+}
+
+.coin-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* Botones */
+.btn {
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn-add {
+    background-color: #28a745; /* Verde */
+}
+.btn-add:hover {
+    background-color: #218838;
+}
+
+.btn-subtract {
+    background-color: #dc3545; /* Rojo */
+}
+.btn-subtract:hover {
+    background-color: #c82333;
+}
+
+.btn-back {
+    background-color: #007bff; /* Azul */
+    margin-bottom: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+.btn-back:hover {
+    background-color: #0069d9;
+}
