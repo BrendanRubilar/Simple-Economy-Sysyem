@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import './MainPanel.css'; // Importamos el nuevo archivo CSS
+import './MainPanel.css';
+import VistaCursos from './VistaCursos.jsx'; 
+import DetalleCurso from './DetalleCurso.jsx';
 
 const MainPanel = () => {
-    const [classes, setClasses] = useState([]); // Clases y estudiantes
-    const [selectedClass, setSelectedClass] = useState(null); // Clase seleccionada
+    const [classes, setClasses] = useState([]);
+    const [selectedClass, setSelectedClass] = useState(null);
 
     // Cargar datos desde SQLite a través de IPC
     const loadData = async () => {
@@ -85,55 +87,21 @@ const MainPanel = () => {
             console.error('Error al restar moneda:', error);
         }
     };
-
     return (
         <div className="main-panel-container">
             <h1 className="main-panel-header">Panel de Administración</h1>
             {selectedClass ? (
-                // Vista de estudiantes dentro de una clase
-                <div>
-                    <button onClick={goBack} className="btn btn-back">
-                        Volver a las clases
-                    </button>
-                    <h2 className="students-view-header">{selectedClass.name}</h2>
-                    <div className="cards-container">
-                        {selectedClass.students.map((student) => (
-                            <div key={student.id} className="card student-card">
-                                <h3>{student.name}</h3>
-                                <p>
-                                    <strong>Curso:</strong> {student.course}
-                                </p>
-                                <p>
-                                    <strong>Monedas:</strong> {student.coins}
-                                </p>
-                                <div className="coin-controls">
-                                    <button onClick={() => addCoin(student.id)} className="btn btn-add">
-                                        +1 Moneda
-                                    </button>
-                                    <button onClick={() => subtractCoin(student.id)} className="btn btn-subtract">
-                                        -1 Moneda
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <DetalleCurso 
+                    selectedClass={selectedClass}
+                    onGoBack={goBack}
+                    onAddCoin={addCoin}
+                    onSubtractCoin={subtractCoin}
+                />
             ) : (
-                // Vista de clases
-                <div className="cards-container">
-                    {classes.map((cls) => (
-                        <div
-                            key={cls.id}
-                            onClick={() => selectClass(cls.id)}
-                            className="card class-card"
-                        >
-                            <h3>{cls.name}</h3>
-                            <p>
-                                <strong>Estudiantes:</strong> {cls.students.length}
-                            </p>
-                        </div>
-                    ))}
-                </div>
+                <VistaCursos 
+                    classes={classes}
+                    onSelectClass={selectClass}
+                />
             )}
         </div>
     );

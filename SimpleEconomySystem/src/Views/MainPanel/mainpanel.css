@@ -6,9 +6,12 @@
     font-family: 'Montserrat', sans-serif;
     padding: 20px;
     background-color: #f4f7f6; /* Un gris muy claro */
-    /* Para un fondo con imagen, descomenta la siguiente línea: */
-    /* background-image: url('/path/to/your/vector-background.svg'); */
-    min-height: 100vh;
+    width: 100%; /* Ocupa todo el ancho */
+    flex-grow: 1; /* Crecerá para ocupar el espacio vertical disponible en #root */
+    display: flex; /* Lo convertimos en un contenedor flex */
+    flex-direction: column; /* Sus hijos se apilarán verticalmente */
+    align-items: center; /* Centra a sus hijos horizontalmente */
+    box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
 }
 
 .main-panel-header {
