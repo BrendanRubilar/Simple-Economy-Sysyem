@@ -1,1 +1,1 @@
-# Simple-Economy-Sysyem
+# Simple-Economy-System
