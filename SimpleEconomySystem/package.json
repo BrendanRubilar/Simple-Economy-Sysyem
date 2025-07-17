@@ -38,17 +38,25 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-    "appId": "com.electron.simpleeconomysystem",
-    "productName": "SimpleEconomySystem",
+    "appId": "com.brendanrubilar.simpleeconomysystem",
+    "productName": "Simple Economy System",
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "Database/**/*"
     ],
     "directories": {
-      "buildResources": "assets"
+      "buildResources": "assets",
+      "output": "release"
     },
     "win": {
-      "target": "nsis"
+      "target": "portable"
+    },
+    "portable": {
+      "splashImage": null
+    },
+    "mac": {
+      "target": "dmg"
     },
     "linux": {
       "target": "AppImage"

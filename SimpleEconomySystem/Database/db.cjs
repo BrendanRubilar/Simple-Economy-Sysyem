@@ -1,15 +1,39 @@
 const path = require('path');
 const Database = require('better-sqlite3');
+let db;
 
-// La base de datos se creará en el directorio raíz del proyecto
-const dbPath = path.resolve(__dirname, '..', 'database.db');
-const db = new Database(dbPath, { verbose: console.log });
+// La función ahora acepta la ruta como argumento
+function initDatabase(dbPath) {
+    if (db) {
+        return db;
+    }
 
-// Activar WAL mode para mejor concurrencia
-db.pragma('journal_mode = WAL');
+    try {
+        // Usa la ruta que le pasaron para crear/abrir la BD
+        db = new Database(dbPath, { verbose: console.log });
+        db.pragma('journal_mode = WAL');
 
-// Crear tablas si no existen
-const createTables = () => {
+        // Llama a las funciones para configurar la BD
+        createTables(db);
+        seedData(db);
+
+    } catch (error) {
+        console.error('Failed to initialize the database:', error);
+        throw error;
+    }
+    return db;
+}
+
+function getDb() {
+    if (!db) {
+        throw new Error('Database has not been initialized. Call initDatabase first.');
+    }
+    return db;
+}
+
+// --- Funciones de configuración (aceptan 'db' como parámetro) ---
+
+const createTables = (dbInstance) => {
   const createClassesTable = `
     CREATE TABLE IF NOT EXISTS classes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,19 +50,18 @@ const createTables = () => {
       FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
     );
   `;
-  db.exec(createClassesTable);
-  db.exec(createStudentsTable);
+  dbInstance.exec(createClassesTable);
+  dbInstance.exec(createStudentsTable);
 };
 
-// Insertar datos de ejemplo si las tablas están vacías
-const seedData = () => {
-  const count = db.prepare('SELECT COUNT(*) as count FROM classes').get().count;
+const seedData = (dbInstance) => {
+  const count = dbInstance.prepare('SELECT COUNT(*) as count FROM classes').get().count;
   if (count === 0) {
     console.log('Base de datos vacía, insertando datos de ejemplo...');
-    const insertClass = db.prepare('INSERT INTO classes (name) VALUES (?)');
-    const insertStudent = db.prepare('INSERT INTO students (name, grade, coins, class_id) VALUES (?, ?, ?, ?)');
+    const insertClass = dbInstance.prepare('INSERT INTO classes (name) VALUES (?)');
+    const insertStudent = dbInstance.prepare('INSERT INTO students (name, grade, coins, class_id) VALUES (?, ?, ?, ?)');
 
-    db.transaction(() => {
+    dbInstance.transaction(() => {
       const classAId = insertClass.run('Clase A - 5º Primaria').lastInsertRowid;
       const classBId = insertClass.run('Clase B - 6º Primaria').lastInsertRowid;
 
@@ -56,8 +79,4 @@ const seedData = () => {
   }
 };
 
-// Ejecutar la inicialización
-createTables();
-seedData();
-
-module.exports = db;
+module.exports = { initDatabase, getDb };
