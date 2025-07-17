@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import MainPanel from './Views/MainPanel/VistaCursos.jsx';
+import MainPanel from './Views/MainPanel/MainPanel.jsx';
 import './App.css';
 
 function App() {
